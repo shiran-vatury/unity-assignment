@@ -3,7 +3,7 @@ name: Docker
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
-# documentation.
+# documentation. test
 
 on:  
   push:
@@ -71,7 +71,7 @@ jobs:
           # Set your version numbers
           MAJOR=3
           MINOR=0
-          TAG_PREFIX=py-hello-world
+          TAG_PREFIX=node-app
       
           # Construct the tag using run_number
           VERSION="${MAJOR}.${MINOR}.${GITHUB_RUN_NUMBER}-${TAG_PREFIX}"
