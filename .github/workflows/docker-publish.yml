@@ -74,7 +74,7 @@ jobs:
           # Set your version numbers
           MAJOR=3
           MINOR=0
-          TAG_PREFIX=node-app
+          TAG_PREFIX=it-works-on-my-machine
       
           # Construct the tag using run_number
           VERSION="${MAJOR}.${MINOR}.${GITHUB_RUN_NUMBER}-${TAG_PREFIX}"
