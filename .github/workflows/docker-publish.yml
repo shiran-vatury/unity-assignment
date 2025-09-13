@@ -23,50 +23,7 @@ env:
   TAG_PREFIX: it-works-on-my-machine
 
 jobs:
-  kind-cluster-setup:
-    runs-on: ubuntu-latest
-    outputs:
-      kubeconfig: ${{ steps.set-kubeconfig.outputs.kubeconfig }}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v2
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y curl sudo lsb-release
-
-    - name: Install Kind
-      run: |
-        curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.18.0/kind-linux-amd64
-        chmod +x ./kind
-        sudo mv kind /usr/local/bin/
-
-    - name: Create Kind Kubernetes cluster with port 5000 mapped
-      run: |
-        cat <<EOF | kind create cluster --name github-actions-cluster --config=-
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        nodes:
-        - role: control-plane
-          extraPortMappings:
-          - containerPort: 30500  # Inside Kind (NodePort)
-            hostPort: 3000        # Exposed to GitHub Runner localhost
-        EOF
-
-    - name: Set up kubectl
-      run: |
-        export KUBEVERSION=$(kubectl version --short | awk -Fv '/Server Version/ {print $3}')
-        echo "KUBEVERSION=$KUBEVERSION"
-        echo "KUBE_CONFIG=/home/runner/.kube/config" >> $GITHUB_ENV
-        echo "kubeconfig=/home/runner/.kube/config" >> $GITHUB_OUTPUT
-
-    - name: Verify kubectl is working
-      run: |
-        kubectl cluster-info
+  
 
   test:
     runs-on: ubuntu-latest
@@ -163,8 +120,54 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: snyk container test ${{ env.IMAGE_REF }} --severity-threshold=high || true
 
-  deploy-dev:
+  kind-cluster-setup:
     needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      kubeconfig: ${{ steps.set-kubeconfig.outputs.kubeconfig }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl sudo lsb-release
+
+    - name: Install Kind
+      run: |
+        curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.18.0/kind-linux-amd64
+        chmod +x ./kind
+        sudo mv kind /usr/local/bin/
+
+    - name: Create Kind Kubernetes cluster with port 5000 mapped
+      run: |
+        cat <<EOF | kind create cluster --name github-actions-cluster --config=-
+        kind: Cluster
+        apiVersion: kind.x-k8s.io/v1alpha4
+        nodes:
+        - role: control-plane
+          extraPortMappings:
+          - containerPort: 30500  # Inside Kind (NodePort)
+            hostPort: 3000        # Exposed to GitHub Runner localhost
+        EOF
+
+    - name: Set up kubectl
+      run: |
+        export KUBEVERSION=$(kubectl version --short | awk -Fv '/Server Version/ {print $3}')
+        echo "KUBEVERSION=$KUBEVERSION"
+        echo "KUBE_CONFIG=/home/runner/.kube/config" >> $GITHUB_ENV
+        echo "kubeconfig=/home/runner/.kube/config" >> $GITHUB_OUTPUT
+
+    - name: Verify kubectl is working
+      run: |
+        kubectl cluster-info
+
+  deploy-dev:
+    needs: kind-cluster-setup
     runs-on: ubuntu-latest
     env:
       KUBECONFIG: ${{ needs.kind-cluster-setup.outputs.kubeconfig }}
