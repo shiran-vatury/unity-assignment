@@ -255,9 +255,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Manual Approval
-      uses: hmarr/auto-approve-action@v2
-      if: github.event_name == 'workflow_dispatch'
 
     - name: Set up Docker
       uses: docker/setup-buildx-action@v2
