@@ -101,7 +101,10 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.IMAGE_REF }}
+          tags: |
+            ${{ env.IMAGE_REF }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -177,8 +180,8 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy to Kubernetes
       run: |
-        cat k8s/deployment.yaml
         kubectl apply -f k8s/deployment.yaml
+        kubectl set image deployment/node-app node-app=${{ needs.build.outputs.image_ref }} --record
   
     - name: Test app
       run: |
