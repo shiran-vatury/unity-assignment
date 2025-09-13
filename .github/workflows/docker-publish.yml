@@ -1,6 +1,7 @@
 name: Docker
 
 on:  
+  workflow_dispatch:
   push:
     branches: 
       - main       
@@ -22,6 +23,51 @@ env:
   TAG_PREFIX: it-works-on-my-machine
 
 jobs:
+  kind-cluster-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      kubeconfig: ${{ steps.set-kubeconfig.outputs.kubeconfig }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl sudo lsb-release
+
+    - name: Install Kind
+      run: |
+        curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.18.0/kind-linux-amd64
+        chmod +x ./kind
+        sudo mv kind /usr/local/bin/
+
+    - name: Create Kind Kubernetes cluster with port 5000 mapped
+      run: |
+        cat <<EOF | kind create cluster --name github-actions-cluster --config=-
+        kind: Cluster
+        apiVersion: kind.x-k8s.io/v1alpha4
+        nodes:
+        - role: control-plane
+          extraPortMappings:
+          - containerPort: 30500  # Inside Kind (NodePort)
+            hostPort: 3000        # Exposed to GitHub Runner localhost
+        EOF
+
+    - name: Set up kubectl
+      run: |
+        export KUBEVERSION=$(kubectl version --short | awk -Fv '/Server Version/ {print $3}')
+        echo "KUBEVERSION=$KUBEVERSION"
+        echo "KUBE_CONFIG=/home/runner/.kube/config" >> $GITHUB_ENV
+        echo "kubeconfig=/home/runner/.kube/config" >> $GITHUB_OUTPUT
+
+    - name: Verify kubectl is working
+      run: |
+        kubectl cluster-info
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -120,6 +166,8 @@ jobs:
   deploy-dev:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      KUBECONFIG: ${{ needs.kind-cluster-setup.outputs.kubeconfig }}
     environment: dev
     steps:
       - name: Log into GHCR
@@ -128,27 +176,20 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-  
-      - name: installing jq
-        run: sudo apt-get install jq -y
-  
-      - name: Pull image
-        run: docker pull ${{ needs.build.outputs.image_ref }}
-    
-      - name: Run container (Dev)
-        run: docker run -d --name dev-node-container -p 3000:3000 ${{ needs.build.outputs.image_ref }}
+
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/deployment.yaml
     
       - name: Test app
         run: |
-          sleep 5
-          curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
+          sleep 10
+          curl -s http://localhost:30080/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
   
-      - name: Check container health status   
-        run: |
-          docker inspect --format='{{json .State.Health}}' dev-node-container | jq
   
   deploy-staging:
     needs: deploy-dev
+    env:
+      KUBECONFIG: ${{ needs.kind-cluster-setup.outputs.kubeconfig }}
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -159,22 +200,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
   
-      - name: Pull image
-        run: docker pull ${{ needs.build.outputs.image_ref }}
-    
-      - name: Run container (Staging)
-        run: docker run -d --name staging-node-container -p 3001:3000 ${{ needs.build.outputs.image_ref }}
-    
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/deployment.yaml   
+
       - name: Test app
         run: |
-          sleep 5
-          curl -s http://localhost:3001/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
-      - name: Check container health status   
-        run: |
-          docker inspect --format='{{json .State.Health}}' staging-node-container | jq
-  
+          sleep 10
+          curl -s http://localhost:30080/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
+      
   deploy-prod:
     needs: deploy-staging
+    env:
+      KUBECONFIG: ${{ needs.kind-cluster-setup.outputs.kubeconfig }}
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -189,16 +226,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
   
-      - name: Pull image
-        run: docker pull ${{ needs.build.outputs.image_ref }}
-    
-      - name: Run container (Prod)
-        run: docker run -d --name prod-node-container -p 3002:3000 ${{ needs.build.outputs.image_ref }}
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/deployment.yaml
     
       - name: Test app
         run: |
-          sleep 5
-          curl -s http://localhost:3002/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
-      - name: Check container health status   
-        run: |
-          docker inspect --format='{{json .State.Health}}' prod-node-container | jq
+          sleep 10
+          curl -s http://localhost:30080/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
