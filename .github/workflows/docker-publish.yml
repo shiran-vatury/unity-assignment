@@ -17,6 +17,9 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  MAJOR: 3
+  MINOR: 0
+  TAG_PREFIX: it-works-on-my-machine
 
 jobs:
   test:
@@ -46,6 +49,9 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      image_ref: ${{ steps.version.outputs.image_ref }}
 
     steps:
       - name: Checkout repository
@@ -53,16 +59,16 @@ jobs:
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 #v3.5.0
+        uses: sigstore/cosign-installer@v3.5.0
         with:
           cosign-release: 'v2.2.4'
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        uses: docker/setup-buildx-action@v3
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -71,30 +77,27 @@ jobs:
       - name: Set Docker image version tag
         id: version
         run: |
-          # Set your version numbers
-          MAJOR=3
-          MINOR=0
-          TAG_PREFIX=it-works-on-my-machine
-      
-          # Construct the tag using run_number
-          VERSION="${MAJOR}.${MINOR}.${GITHUB_RUN_NUMBER}-${TAG_PREFIX}"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          VERSION="${{ env.MAJOR }}.${{ env.MINOR }}-${{ env.TAG_PREFIX }}-${GITHUB_RUN_NUMBER}"
+          IMAGE_REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "image_ref=$IMAGE_REF" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
 
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: ${{ env.VERSION }}
       
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          tags: ${{ env.IMAGE_REF }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -102,7 +105,7 @@ jobs:
       - name: Sign the published Docker image
         if: ${{ github.event_name != 'pull_request' }}
         env:
-          TAGS: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          TAGS: ${{ env.IMAGE_REF }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
@@ -113,15 +116,15 @@ jobs:
       - name: Log into GHCR
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
   
       - name: Pull image
-        run: docker pull ghcr.io/${{ github.repository }}:${{ env.TAGS }}
+        run: docker pull ${{ needs.build.outputs.image_ref }}
   
       - name: Run container
-        run: docker run -d -p 3000:3000 ghcr.io/${{ github.repository }}:${{ env.TAGS }}
+        run: docker run -d -p 3000:3000 ${{ needs.build.outputs.image_ref }}
   
       - name: Test app
         run: |
