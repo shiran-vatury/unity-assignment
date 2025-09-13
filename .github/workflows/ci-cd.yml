@@ -181,7 +181,7 @@ jobs:
     - name: Test app
       run: |
         sleep 10
-        curl -s http://localhost:30080/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
+        curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
   
   
   deploy-staging:
@@ -247,7 +247,7 @@ jobs:
     - name: Test app
       run: |
         sleep 10
-        curl -s http://localhost:30080/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
+        curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
       
   deploy-prod:
     needs: deploy-staging
@@ -315,4 +315,4 @@ jobs:
     - name: Test app
       run: |
         sleep 10
-        curl -s http://localhost:30080/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
+        curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
