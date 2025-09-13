@@ -23,8 +23,6 @@ env:
   TAG_PREFIX: it-works-on-my-machine
 
 jobs:
-  
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -173,6 +171,11 @@ jobs:
       KUBECONFIG: ${{ needs.kind-cluster-setup.outputs.kubeconfig }}
     environment: dev
     steps:
+      - name: variable check
+        run: |
+          echo "KUBECONFIG is $KUBECONFIG"
+          echo "IMAGE_REF is $IMAGE_REF"
+          echo "VERSION is $VERSION"
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Log into GHCR
