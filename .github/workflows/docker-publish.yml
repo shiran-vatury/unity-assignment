@@ -33,9 +33,6 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Snyk CLI
-        run: npm install -g snyk
-
       - name: npm install
         run: npm install
 
@@ -57,6 +54,9 @@ jobs:
       image_ref: ${{ steps.version.outputs.image_ref }}
 
     steps:
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@main
+        
       - name: Checkout repository
         uses: actions/checkout@v4
 
