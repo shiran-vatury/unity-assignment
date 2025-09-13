@@ -177,7 +177,6 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy to Kubernetes
       run: |
-        kubectl set image deployment/node-app node-app=${{ needs.build.outputs.image_ref }} --record
         cat k8s/deployment.yaml
         kubectl apply -f k8s/deployment.yaml
   
@@ -246,7 +245,6 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy to Kubernetes
       run: |
-        kubectl set image deployment/node-app node-app=${{ needs.build.outputs.image_ref }} --record
         kubectl apply -f k8s/deployment.yaml
   
     - name: Test app
@@ -316,7 +314,6 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy to Kubernetes
       run: |
-        kubectl set image deployment/node-app node-app=${{ needs.build.outputs.image_ref }} --record
         kubectl apply -f k8s/deployment.yaml 
   
     - name: Test app
