@@ -143,7 +143,7 @@ jobs:
         chmod +x ./kind
         sudo mv kind /usr/local/bin/
 
-    - name: Create Kind Kubernetes cluster with port 5000 mapped
+    - name: Create Kind Kubernetes cluster with port 3000 mapped
       run: |
         cat <<EOF | kind create cluster --name github-actions-cluster --config=-
         kind: Cluster
@@ -154,6 +154,16 @@ jobs:
           - containerPort: 30500  # Inside Kind (NodePort)
             hostPort: 3000        # Exposed to GitHub Runner localhost
         EOF
+
+    - name: Install metrics-server
+      run: |
+        kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+        # Patch to make metrics-server work inside Kind (insecure TLS)
+        kubectl patch deployment metrics-server -n kube-system \
+          --type='json' \
+          -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+        # wait until metrics-server is ready
+        kubectl rollout status deployment/metrics-server -n kube-system --timeout=120s
 
     - name: Set up kubectl
       run: |
@@ -207,7 +217,7 @@ jobs:
         chmod +x ./kind
         sudo mv kind /usr/local/bin/
 
-    - name: Create Kind Kubernetes cluster with port 5000 mapped
+    - name: Create Kind Kubernetes cluster with port 3000 mapped
       run: |
         cat <<EOF | kind create cluster --name github-actions-cluster --config=-
         kind: Cluster
@@ -218,6 +228,16 @@ jobs:
           - containerPort: 30500  # Inside Kind (NodePort)
             hostPort: 3000        # Exposed to GitHub Runner localhost
         EOF
+
+    - name: Install metrics-server
+      run: |
+        kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+        # Patch to make metrics-server work inside Kind (insecure TLS)
+        kubectl patch deployment metrics-server -n kube-system \
+          --type='json' \
+          -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+        # wait until metrics-server is ready
+        kubectl rollout status deployment/metrics-server -n kube-system --timeout=120s
 
     - name: Set up kubectl
       run: |
@@ -270,7 +290,7 @@ jobs:
         chmod +x ./kind
         sudo mv kind /usr/local/bin/
 
-    - name: Create Kind Kubernetes cluster with port 5000 mapped
+    - name: Create Kind Kubernetes cluster with port 3000 mapped
       run: |
         cat <<EOF | kind create cluster --name github-actions-cluster --config=-
         kind: Cluster
@@ -281,6 +301,16 @@ jobs:
           - containerPort: 30500  # Inside Kind (NodePort)
             hostPort: 3000        # Exposed to GitHub Runner localhost
         EOF
+
+    - name: Install metrics-server
+      run: |
+        kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+        # Patch to make metrics-server work inside Kind (insecure TLS)
+        kubectl patch deployment metrics-server -n kube-system \
+          --type='json' \
+          -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+        # wait until metrics-server is ready
+        kubectl rollout status deployment/metrics-server -n kube-system --timeout=120s
 
     - name: Set up kubectl
       run: |
