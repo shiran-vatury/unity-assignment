@@ -188,6 +188,7 @@ jobs:
         kubectl apply -f k8s/deployment.yaml
         kubectl rollout status deployment/node-app --timeout=120s
         kubectl get pods -o wide
+        kubectl get hpa node-app-hpa
   
     - name: Test app
       run: |
