@@ -201,12 +201,13 @@ jobs:
       uses: slackapi/slack-github-action@v1.25.0
       with:
         channel-id: 'C09F4KCBU3Y'
-        slack-message: |
+        webhook-type: webhook-trigger
+        payload: |
           Deployment to *DEV* completed  
           Status: ${{ job.status }}  
           Commit: ${{ github.sha }}  
           <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>
-        slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
   
   deploy-staging:
     needs: deploy-dev
@@ -287,12 +288,13 @@ jobs:
       uses: slackapi/slack-github-action@v1.25.0
       with:
         channel-id: 'C09F4KCBU3Y'
-        slack-message: |
+        webhook-type: webhook-trigger
+        payload: |
           Deployment to *STG* completed  
           Status: ${{ job.status }}  
           Commit: ${{ github.sha }}  
           <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>
-        slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   deploy-prod:
     needs: deploy-staging
@@ -373,9 +375,10 @@ jobs:
       uses: slackapi/slack-github-action@v1.25.0
       with:
         channel-id: 'C09F4KCBU3Y'
-        slack-message: |
+        webhook-type: webhook-trigger
+        payload: |
           Deployment to *PROD* completed  
           Status: ${{ job.status }}  
           Commit: ${{ github.sha }}  
           <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>
-        slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
