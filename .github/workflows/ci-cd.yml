@@ -197,17 +197,14 @@ jobs:
         curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
 
     - name: Notify Slack
-      if: always()
       uses: slackapi/slack-github-action@v2.1.1
       with:
-        
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
         webhook-type: webhook-trigger
         payload: |
-          Deployment to *DEV* completed  
-          Status: ${{ job.status }}  
-          Commit: ${{ github.sha }}  
-          <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09F4KCBU3Y'
+          text: "Deployment to *DEV* completed"
+        
   
   deploy-staging:
     needs: deploy-dev
@@ -284,17 +281,13 @@ jobs:
         curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
 
     - name: Notify Slack
-      if: always()
       uses: slackapi/slack-github-action@v2.1.1
       with:
-        
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
         webhook-type: webhook-trigger
         payload: |
-          Deployment to *STG* completed  
-          Status: ${{ job.status }}  
-          Commit: ${{ github.sha }}  
-          <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09F4KCBU3Y'
+          text: "Deployment to *STAGING* completed"
 
   deploy-prod:
     needs: deploy-staging
@@ -371,14 +364,11 @@ jobs:
         curl -s http://localhost:3000/health | grep "Still working" && echo "PASS ✅" || echo "FAIL ❌"
 
     - name: Notify Slack
-      if: always()
       uses: slackapi/slack-github-action@v2.1.1
       with:
-        
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
         webhook-type: webhook-trigger
         payload: |
-          Deployment to *PROD* completed  
-          Status: ${{ job.status }}  
-          Commit: ${{ github.sha }}  
-          <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09F4KCBU3Y'
+          text: "Deployment to *PROD* completed"
+        
