@@ -200,7 +200,7 @@ jobs:
       if: always()
       uses: slackapi/slack-github-action@v2.1.1
       with:
-        channel-id: 'C09F4KCBU3Y'
+        
         webhook-type: webhook-trigger
         payload: |
           Deployment to *DEV* completed  
@@ -287,7 +287,7 @@ jobs:
       if: always()
       uses: slackapi/slack-github-action@v2.1.1
       with:
-        channel-id: 'C09F4KCBU3Y'
+        
         webhook-type: webhook-trigger
         payload: |
           Deployment to *STG* completed  
@@ -374,7 +374,7 @@ jobs:
       if: always()
       uses: slackapi/slack-github-action@v2.1.1
       with:
-        channel-id: 'C09F4KCBU3Y'
+        
         webhook-type: webhook-trigger
         payload: |
           Deployment to *PROD* completed  
