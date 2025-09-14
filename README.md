@@ -56,6 +56,10 @@ The number of replicas will automatically scale based on resource usage (CPU in 
 
 - Trigger pipeline via **Actions** tab in GitHub using `workflow_dispatch`.
 
+## 🔔 Notiffication to Slack
+
+- Notifications will be sent to Slack via webhook for every deployment stage<br>
+
 
 ## How to Improve this CI/CD and the app performence and stablity
 
