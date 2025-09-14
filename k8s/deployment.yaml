@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: node-app
-        image: ghcr.io/shiran-vatury/unity-assignment:latest
+        image: IMAGE_PLACEHOLDER
         ports:
         - containerPort: 3000
         livenessProbe:
